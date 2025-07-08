@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { StudySession, ExerciseResult } from '../types';
 import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabase';
 
 interface StudyContextType {
   currentSession: StudySession | null;
@@ -17,9 +18,7 @@ const StudyContext = createContext<StudyContextType | undefined>(undefined);
 
 export const useStudy = () => {
   const context = useContext(StudyContext);
-  if (context === undefined) {
-    throw new Error('useStudy must be used within a StudyProvider');
-  }
+  if (!context) throw new Error('useStudy must be used within a StudyProvider');
   return context;
 };
 
@@ -35,33 +34,26 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     if (savedSessions) {
       try {
-        const sessions = JSON.parse(savedSessions);
-        setStudySessions(sessions);
-      } catch (error) {
-        console.error('Error loading study sessions:', error);
+        setStudySessions(JSON.parse(savedSessions));
+      } catch (e) {
+        console.error('Erro ao carregar sessões:', e);
       }
     }
-    
     if (savedResults) {
       try {
-        const results = JSON.parse(savedResults);
-        setExerciseResults(results);
-      } catch (error) {
-        console.error('Error loading exercise results:', error);
+        setExerciseResults(JSON.parse(savedResults));
+      } catch (e) {
+        console.error('Erro ao carregar exercícios:', e);
       }
     }
   }, []);
 
   useEffect(() => {
-    if (studySessions.length > 0) {
-      localStorage.setItem('vap-study-sessions', JSON.stringify(studySessions));
-    }
+    localStorage.setItem('vap-study-sessions', JSON.stringify(studySessions));
   }, [studySessions]);
 
   useEffect(() => {
-    if (exerciseResults.length > 0) {
-      localStorage.setItem('vap-exercise-results', JSON.stringify(exerciseResults));
-    }
+    localStorage.setItem('vap-exercise-results', JSON.stringify(exerciseResults));
   }, [exerciseResults]);
 
   const startSession = (moduleId: number) => {
@@ -73,11 +65,11 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCurrentSession(newSession);
   };
 
-  const endSession = () => {
+  const endSession = async () => {
     if (currentSession && user) {
       const endTime = new Date();
       const duration = Math.floor((endTime.getTime() - currentSession.startTime.getTime()) / 60000);
-      
+
       const completedSession: StudySession = {
         ...currentSession,
         endTime,
@@ -85,26 +77,44 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       };
 
       setStudySessions(prev => [...prev, completedSession]);
-      
       updateUser({
         totalTimeStudied: user.totalTimeStudied + completedSession.duration
       });
-
       setCurrentSession(null);
+
+      // 💾 Gravar no Supabase
+      await supabase.from('progress').insert({
+        user_id: user.id,
+        module_id: completedSession.moduleId,
+        start_time: completedSession.startTime.toISOString(),
+        end_time: completedSession.endTime?.toISOString(),
+        duration: completedSession.duration
+      });
     }
   };
 
-  const addExerciseResult = (result: ExerciseResult) => {
+  const addExerciseResult = async (result: ExerciseResult) => {
     setExerciseResults(prev => {
       const filtered = prev.filter(r => r.moduleId !== result.moduleId);
       return [...filtered, result];
     });
+
+    if (user) {
+      await supabase.from('stats').upsert({
+        user_id: user.id,
+        module_id: result.moduleId,
+        score: result.score,
+        total_questions: result.totalQuestions
+      }, {
+        onConflict: 'user_id,module_id'
+      });
+    }
   };
 
   const getTotalTimeForModule = (moduleId: number): number => {
     return studySessions
-      .filter(session => session.moduleId === moduleId && session.duration > 0)
-      .reduce((total, session) => total + session.duration, 0);
+      .filter(session => session.moduleId === moduleId)
+      .reduce((sum, s) => sum + s.duration, 0);
   };
 
   const getModuleExerciseScore = (moduleId: number): number | null => {
