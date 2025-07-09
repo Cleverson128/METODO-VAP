@@ -14,13 +14,14 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  role?: string; // 👈 Adiciona isso
   totalPoints: number;
   level: number;
-  totalTimeStudied: number; // in minutes
+  totalTimeStudied: number;
   completedModules: number[];
   achievements: Achievement[];
   currentStreak: number;
-  lastStudyDate?: string;
+  lastStudyDate: string;
 }
 
 export interface Achievement {

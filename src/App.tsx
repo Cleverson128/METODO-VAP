@@ -6,7 +6,8 @@ import { Layout } from './components/Layout';
 import LoginPage from './components/LoginPage';
 import { Dashboard } from './components/Dashboard';
 import { ModulePage } from './components/ModulePage';
-import ProtectedRoute from './components/ProtectedRoute'; // ✅ novo import
+import { AdminPanel } from './components/AdminPanel';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -31,6 +32,16 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <ModulePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminPanel />
                   </Layout>
                 </ProtectedRoute>
               }

@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { modules } from '../data/modules';
 import { ModuleCard } from './ModuleCard';
-import { Trophy, Target, Clock, BookOpen, Star, Award, Calendar, TrendingUp, LogOut } from 'lucide-react';
+import { Trophy, Target, Clock, BookOpen, Star, Award, Calendar, TrendingUp, LogOut, ShieldCheck } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
- const completedModules = user?.completedModules.length || 0;
+  const completedModules = user?.completedModules.length || 0;
   const totalModules = modules.length;
   const progressPercentage = (completedModules / totalModules) * 100;
   const unlockedAchievements = user?.achievements.filter(a => a.unlocked).length || 0;
@@ -41,8 +41,15 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Top Bar with Logout */}
-      <div className="flex justify-end">
+      {/* Top Bar with Logout and Admin */}
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => navigate('/admin')}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white border border-gray-600 rounded-lg hover:bg-[#0AFF0F]/10 transition-colors"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Painel Admin
+        </button>
         <button
           onClick={logout}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white border border-gray-600 rounded-lg hover:bg-[#0AFF0F]/10 transition-colors"
@@ -66,7 +73,7 @@ export const Dashboard: React.FC = () => {
           Continue sua jornada de aprendizado no Método VAP
         </p>
       </motion.div>
-      
+
       {/* Progress Overview */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
