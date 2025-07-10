@@ -13,21 +13,18 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // --- NOVO DEBUG COMPLETO ---
-    console.log("--- INÍCIO DO DEBUG DO WEBHOOK HOTMART ---");
-    console.log("CABEÇALHOS RECEBIDOS:", JSON.stringify(event.headers, null, 2));
-    // --- FIM DO DEBUG ---
-
     const data = JSON.parse(event.body || '{}');
 
-    // Verificação de segurança
-    if (event.headers['hottok'] !== webhookSecret) {
-      console.error("Falha na verificação de segurança. Hottok recebido:", event.headers['hottok']);
+    // Verificação de segurança com o nome do cabeçalho CORRETO
+    if (event.headers['x-hotmart-hottok'] !== webhookSecret) {
+      console.error("Falha na verificação de segurança. Hottok não corresponde.");
       return { statusCode: 401, body: 'Unauthorized webhook' };
     }
 
     const { email } = data;
-    if (!email) return { statusCode: 400, body: 'Email ausente' };
+    if (!email) {
+      return { statusCode: 400, body: 'Email ausente no corpo da requisição' };
+    }
 
     const { error } = await supabase.auth.admin.createUser({
       email,
@@ -39,6 +36,7 @@ export const handler: Handler = async (event) => {
       if (error.message.includes('User already registered')) {
         return { statusCode: 200, body: 'Usuário já existe' };
       }
+      console.error("Erro ao criar usuário no Supabase:", error.message);
       return { statusCode: 500, body: 'Erro ao criar usuário' };
     }
 
@@ -48,7 +46,7 @@ export const handler: Handler = async (event) => {
     };
   } catch (err) {
     const error = err as Error;
-    console.error('Erro no webhook:', error.message);
+    console.error('Erro geral no processamento do webhook:', error.message);
     return { statusCode: 500, body: 'Erro interno do servidor' };
   }
 };
