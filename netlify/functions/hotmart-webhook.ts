@@ -13,17 +13,16 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    // --- NOVO DEBUG COMPLETO ---
+    console.log("--- INÍCIO DO DEBUG DO WEBHOOK HOTMART ---");
+    console.log("CABEÇALHOS RECEBIDOS:", JSON.stringify(event.headers, null, 2));
+    // --- FIM DO DEBUG ---
+
     const data = JSON.parse(event.body || '{}');
 
-    // --- LINHAS DE DEBUG ADICIONADAS ---
-    console.log("--- DEBUG HOTMART WEBHOOK ---");
-    console.log("Header 'hottok' recebido:", event.headers['hottok']);
-    console.log("Secret esperado (início):", webhookSecret ? webhookSecret.substring(0, 5) + '...' : 'SECRET NÃO DEFINIDO');
-    console.log("A comparação de segurança resulta em falha:", event.headers['hottok'] !== webhookSecret);
-    // --- FIM DAS LINHAS DE DEBUG ---
-
-    // Verificação de segurança CORRIGIDA
+    // Verificação de segurança
     if (event.headers['hottok'] !== webhookSecret) {
+      console.error("Falha na verificação de segurança. Hottok recebido:", event.headers['hottok']);
       return { statusCode: 401, body: 'Unauthorized webhook' };
     }
 
