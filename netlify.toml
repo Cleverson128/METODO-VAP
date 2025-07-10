@@ -12,6 +12,7 @@
   targetPort = 5173
   port = 8888
   autoLaunch = true
+  envFiles = [".env.local"]  # ✅ ESSA LINHA CARREGA VARIÁVEIS DO .env.local
 
 [[redirects]]
   from = "/api/*"

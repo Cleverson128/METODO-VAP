@@ -1,4 +1,3 @@
-// netlify/functions/hotmart-webhook.ts
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
@@ -15,43 +14,47 @@ export const handler: Handler = async (event) => {
 
   try {
     const data = JSON.parse(event.body || '{}');
-    const { email, hotmart_key } = data;
 
-    // Verificar segredo (proteção)
-    if (event.headers['x-hotmart-signature'] !== webhookSecret) {
+    // --- LINHAS DE DEBUG ADICIONADAS ---
+    console.log("--- DEBUG HOTMART WEBHOOK ---");
+    console.log("Header 'hottok' recebido:", event.headers['hottok']);
+    console.log("Secret esperado (início):", webhookSecret ? webhookSecret.substring(0, 5) + '...' : 'SECRET NÃO DEFINIDO');
+    console.log("A comparação de segurança resulta em falha:", event.headers['hottok'] !== webhookSecret);
+    // --- FIM DAS LINHAS DE DEBUG ---
+
+    // Verificação de segurança CORRIGIDA
+    if (event.headers['hottok'] !== webhookSecret) {
       return { statusCode: 401, body: 'Unauthorized webhook' };
     }
 
-    if (!email) {
-      return { statusCode: 400, body: 'Email ausente no payload' };
-    }
+    const { email } = data;
+    if (!email) return { statusCode: 400, body: 'Email ausente' };
 
-    // Tentar criar o usuário no Supabase
     const { error } = await supabase.auth.admin.createUser({
       email,
       password: generateSecurePassword(email),
-      email_confirm: true
+      email_confirm: true,
     });
 
     if (error) {
       if (error.message.includes('User already registered')) {
         return { statusCode: 200, body: 'Usuário já existe' };
       }
-      console.error('Erro ao criar usuário:', error);
-      return { statusCode: 500, body: 'Erro interno ao criar usuário' };
+      return { statusCode: 500, body: 'Erro ao criar usuário' };
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, email })
+      body: JSON.stringify({ success: true }),
     };
   } catch (err) {
-    console.error('Erro no webhook:', err);
-    return { statusCode: 500, body: 'Erro ao processar webhook' };
+    const error = err as Error;
+    console.error('Erro no webhook:', error.message);
+    return { statusCode: 500, body: 'Erro interno do servidor' };
   }
 };
 
-function generateSecurePassword(email: string) {
+function generateSecurePassword(email: string): string {
   const base = email.split('@')[0];
   return `${base.charAt(0).toUpperCase()}${base.slice(1)}${Date.now().toString().slice(-4)}!`;
 }
