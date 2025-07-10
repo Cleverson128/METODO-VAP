@@ -48,7 +48,7 @@ export const handler: Handler = async (event) => {
 
     // Enviar e-mail com acesso
     await resend.emails.send({
-      from: 'Método VAP <contato@fipei.com.br>',
+      from: 'Método VAP <contato@email.fipei.com.br>',
       to: email,
       subject: 'Seus dados de acesso ao Método VAP',
       html: `
