@@ -13,19 +13,24 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const data = JSON.parse(event.body || '{}');
-
-    // Verificação de segurança com o nome do cabeçalho CORRETO
+    // Verificação de segurança
     if (event.headers['x-hotmart-hottok'] !== webhookSecret) {
       console.error("Falha na verificação de segurança. Hottok não corresponde.");
       return { statusCode: 401, body: 'Unauthorized webhook' };
     }
 
-    const { email } = data;
+    const payload = JSON.parse(event.body || '{}');
+
+    // CORREÇÃO: Busca o email no local correto (payload.data.buyer.email)
+    const email = payload?.data?.buyer?.email;
+
     if (!email) {
-      return { statusCode: 400, body: 'Email ausente no corpo da requisição' };
+      // Adiciona um log detalhado para vermos o que veio se o email não for encontrado
+      console.error("Email do comprador não encontrado no payload da Hotmart. Payload recebido:", JSON.stringify(payload, null, 2));
+      return { statusCode: 400, body: 'Email do comprador não encontrado no payload.' };
     }
 
+    // Geração de senha e criação de usuário continua igual
     const { error } = await supabase.auth.admin.createUser({
       email,
       password: generateSecurePassword(email),
@@ -34,15 +39,17 @@ export const handler: Handler = async (event) => {
 
     if (error) {
       if (error.message.includes('User already registered')) {
+        console.log(`Usuário com email ${email} já existe.`);
         return { statusCode: 200, body: 'Usuário já existe' };
       }
       console.error("Erro ao criar usuário no Supabase:", error.message);
       return { statusCode: 500, body: 'Erro ao criar usuário' };
     }
-
+    
+    console.log(`Usuário criado com sucesso para o email: ${email}`);
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true }),
+      body: JSON.stringify({ success: true, message: `Usuário criado para ${email}` }),
     };
   } catch (err) {
     const error = err as Error;
