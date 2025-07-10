@@ -17,7 +17,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // Verificação de segurança
+    // 🔒 Verificação de segurança
     const hottok = event.headers['x-hotmart-hottok'];
     if (hottok !== webhookSecret) {
       console.error("Falha na verificação de segurança. Hottok não corresponde.");
@@ -35,19 +35,20 @@ export const handler: Handler = async (event) => {
 
     const password = generateSecurePassword(email);
 
-    // ✅ Criação do usuário
+    // ✅ Tentar criar o usuário
     const { error } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
     });
 
+    // ⚠️ Se o usuário já existir, seguimos com o envio do e-mail normalmente
     if (error && !error.message.includes('User already registered')) {
       console.error("Erro ao criar usuário no Supabase:", error.message);
       return { statusCode: 500, body: 'Erro ao criar usuário' };
     }
 
-    // ✅ Envio do e-mail com os dados de acesso
+    // ✅ Enviar o e-mail de boas-vindas
     await resend.emails.send({
       from: 'Método VAP <contato@email.fipei.com.br>',
       to: email,
@@ -58,7 +59,8 @@ export const handler: Handler = async (event) => {
           <p>Seu acesso já está liberado:</p>
           <p><strong>Login:</strong> ${email}<br>
           <strong>Senha:</strong> ${password}</p>
-          <p>Portal de acesso: <a href="https://portalcursovap.fipei.com.br">https://portalcursovap.fipei.com.br</a></p>
+          <p>🔗 Portal: <a href="https://portalcursovap.fipei.com.br">Acessar o Portal</a></p>
+          <p>📄 PDF: <a href="https://portalcursovap.fipei.com.br/o-metodo-vap.pdf">Baixar o Material do Curso</a></p>
           <p>Recomendamos trocar a senha após o primeiro login.</p>
           <br>
           <p>💚 Bons estudos!</p>
@@ -66,7 +68,7 @@ export const handler: Handler = async (event) => {
       `
     });
 
-    console.log(`Usuário criado e e-mail enviado com sucesso para ${email}`);
+    console.log(`Usuário processado com sucesso e e-mail enviado para ${email}`);
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, email })
