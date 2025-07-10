@@ -2,14 +2,13 @@ import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
-// Ambiente
+// Variáveis de ambiente
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const webhookSecret = process.env.HOTMART_WEBHOOK_SECRET!;
 const resendApiKey = process.env.RESEND_API_KEY!;
 
-// Instâncias
-const supabase = createClient(supabaseUrl, serviceRole);
+const supabase = createClient(supabaseUrl, serviceKey);
 const resend = new Resend(resendApiKey);
 
 export const handler: Handler = async (event) => {
@@ -18,35 +17,37 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const data = JSON.parse(event.body || '{}');
-    const { email } = data;
+    // Verificação de segurança
+    const hottok = event.headers['x-hotmart-hottok'];
+    if (hottok !== webhookSecret) {
+      console.error("Falha na verificação de segurança. Hottok não corresponde.");
+      return { statusCode: 401, body: 'Unauthorized webhook' };
+    }
 
+    const payload = JSON.parse(event.body || '{}');
+
+    // ✅ Extração correta do e-mail
+    const email = payload?.data?.buyer?.email;
     if (!email) {
-      return { statusCode: 400, body: 'Email ausente no payload' };
+      console.error("Email do comprador não encontrado no payload. Payload recebido:", JSON.stringify(payload, null, 2));
+      return { statusCode: 400, body: 'Email do comprador não encontrado no payload.' };
     }
 
-    // Validação da assinatura (Hotmart)
-    const signature = event.headers['x-hotmart-signature'];
-    if (!signature || signature !== webhookSecret) {
-      return { statusCode: 401, body: 'Webhook não autorizado (assinatura inválida)' };
-    }
-
-    // Gerar senha segura
     const password = generateSecurePassword(email);
 
-    // Criar usuário
+    // ✅ Criação do usuário
     const { error } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true
+      email_confirm: true,
     });
 
     if (error && !error.message.includes('User already registered')) {
-      console.error('Erro ao criar usuário:', error);
-      return { statusCode: 500, body: 'Erro ao criar usuário no Supabase' };
+      console.error("Erro ao criar usuário no Supabase:", error.message);
+      return { statusCode: 500, body: 'Erro ao criar usuário' };
     }
 
-    // Enviar e-mail com acesso
+    // ✅ Envio do e-mail com os dados de acesso
     await resend.emails.send({
       from: 'Método VAP <contato@email.fipei.com.br>',
       to: email,
@@ -54,7 +55,7 @@ export const handler: Handler = async (event) => {
       html: `
         <div style="font-family: sans-serif; padding: 20px;">
           <h2>🎉 Bem-vindo ao Método VAP!</h2>
-          <p>Seu acesso já está liberado.</p>
+          <p>Seu acesso já está liberado:</p>
           <p><strong>Login:</strong> ${email}<br>
           <strong>Senha:</strong> ${password}</p>
           <p>Portal de acesso: <a href="https://portalcursovap.fipei.com.br">https://portalcursovap.fipei.com.br</a></p>
@@ -65,14 +66,16 @@ export const handler: Handler = async (event) => {
       `
     });
 
+    console.log(`Usuário criado e e-mail enviado com sucesso para ${email}`);
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, email })
     };
 
   } catch (err) {
-    console.error('Erro geral no webhook:', err);
-    return { statusCode: 500, body: 'Erro ao processar webhook' };
+    const error = err as Error;
+    console.error('Erro geral no webhook:', error.message);
+    return { statusCode: 500, body: 'Erro interno do servidor' };
   }
 };
 
