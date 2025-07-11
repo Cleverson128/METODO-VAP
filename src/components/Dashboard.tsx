@@ -39,6 +39,12 @@ export const Dashboard: React.FC = () => {
 
   const { pointsNeeded } = getNextLevel();
 
+<button
+  onClick={() => navigate('/alterar-senha')}
+  className="bg-[#272525] border border-gray-600 text-white p-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+>
+  Alterar Senha
+</button>
   return (
     <div className="space-y-8">
       {/* Top Bar with Logout and Admin */}

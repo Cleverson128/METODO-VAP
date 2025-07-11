@@ -1,4 +1,4 @@
-import React from 'react';
+// src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { StudyProvider } from './context/StudyContext';
@@ -7,6 +7,7 @@ import LoginPage from './components/LoginPage';
 import { Dashboard } from './components/Dashboard';
 import { ModulePage } from './components/ModulePage';
 import { AdminPanel } from './components/AdminPanel';
+import { ChangePasswordPage } from './components/ChangePasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+
             <Route
               path="/"
               element={
@@ -26,6 +28,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/module/:id"
               element={
@@ -36,6 +39,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/admin"
               element={
@@ -46,6 +50,18 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/alterar-senha"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ChangePasswordPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>
