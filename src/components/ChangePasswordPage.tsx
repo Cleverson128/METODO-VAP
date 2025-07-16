@@ -6,92 +6,91 @@ import { useNavigate } from 'react-router-dom';
 export const ChangePasswordPage: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
     setSuccess('');
 
     if (newPassword !== confirmNewPassword) {
-      setError('As senhas não coincidem.');
+      setError('A nova senha e a confirmação não coincidem.');
       return;
     }
 
-    const session = await supabase.auth.getSession();
-    const email = session.data.session?.user.email;
-
-    if (!email) {
-      setError('Sessão inválida. Faça login novamente.');
-      return;
+    if (newPassword.length < 6) {
+        setError('A nova senha deve ter no mínimo 6 caracteres.');
+        return;
     }
+    
+    setLoading(true);
 
-    // Reautenticar usuário
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password: currentPassword,
-    });
-
-    if (signInError) {
-      setError('Senha atual incorreta.');
-      return;
-    }
-
-    // Alterar senha
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
 
     if (updateError) {
-      setError('Erro ao atualizar senha.');
+      setError(`Erro ao atualizar senha: ${updateError.message}`);
+      setLoading(false);
       return;
     }
 
-    setSuccess('Senha alterada com sucesso!');
+    setSuccess('Senha alterada com sucesso! Você será desconectado.');
+    setLoading(false);
+    
     setTimeout(() => {
       logout();
       navigate('/login');
-    }, 2000);
+    }, 2500);
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-[#1E1E1E] rounded-xl border border-gray-700 text-white">
-      <h2 className="text-2xl font-bold mb-4">Alterar Senha</h2>
-
-      <label className="block mb-2">Senha atual</label>
-      <input
-        type="password"
-        className="w-full p-2 mb-4 rounded bg-gray-800 text-white"
-        value={currentPassword}
-        onChange={(e) => setCurrentPassword(e.target.value)}
-      />
-
-      <label className="block mb-2">Nova senha</label>
-      <input
-        type="password"
-        className="w-full p-2 mb-4 rounded bg-gray-800 text-white"
-        value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
-      />
-
-      <label className="block mb-2">Confirme a nova senha</label>
-      <input
-        type="password"
-        className="w-full p-2 mb-4 rounded bg-gray-800 text-white"
-        value={confirmNewPassword}
-        onChange={(e) => setConfirmNewPassword(e.target.value)}
-      />
-
-      {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-      {success && <p className="text-green-500 text-sm mb-2">{success}</p>}
-
-      <button
-        onClick={handleChangePassword}
-        className="bg-[#0AFF0F] text-black px-4 py-2 rounded font-medium"
-      >
-        Alterar Senha
+    <div className="space-y-6 text-white max-w-2xl mx-auto p-4 md:p-0">
+      <button onClick={() => navigate('/dashboard')} className="text-[#0AFF0F] hover:underline mb-4 inline-block">
+        &larr; Voltar para o Dashboard
       </button>
+      <h1 className="text-3xl font-bold">Alterar Senha</h1>
+
+      <form onSubmit={handleChangePassword} className="bg-[#1E1E1E] rounded-xl p-6 border border-gray-700 space-y-4">
+        <div>
+          <label htmlFor="new-password" className="block text-sm font-medium text-gray-400 mb-2">
+            Nova Senha
+          </label>
+          <input
+            id="new-password"
+            type="password"
+            placeholder="Pelo menos 6 caracteres"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full p-2 rounded border border-gray-600 bg-[#272525] text-white focus:ring-[#0AFF0F] focus:border-[#0AFF0F]"
+          />
+        </div>
+        
+        <div>
+          <label htmlFor="confirm-new-password" className="block text-sm font-medium text-gray-400 mb-2">
+            Confirme a Nova Senha
+          </label>
+          <input
+            id="confirm-new-password"
+            type="password"
+            placeholder="Repita a nova senha"
+            value={confirmNewPassword}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
+            className="w-full p-2 rounded border border-gray-600 bg-[#272525] text-white focus:ring-[#0AFF0F] focus:border-[#0AFF0F]"
+          />
+        </div>
+
+        <div>
+          <button type="submit" disabled={loading} className="w-full bg-[#0AFF0F] text-black p-3 rounded-lg font-bold hover:bg-[#0AFF0F]/90 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+            {loading ? 'Alterando...' : 'Alterar Senha'}
+          </button>
+        </div>
+      </form>
+      
+      {success && <p className="text-center text-green-400 mt-4">{success}</p>}
+      {error && <p className="text-center text-red-400 mt-4">{error}</p>}
     </div>
   );
 };

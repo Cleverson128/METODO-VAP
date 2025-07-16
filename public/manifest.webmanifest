@@ -1,0 +1,21 @@
+{
+  "name": "Método VAP",
+  "short_name": "VAP",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#272525",
+  "theme_color": "#0AFF0F",
+  "description": "Portal educacional do Método VAP",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

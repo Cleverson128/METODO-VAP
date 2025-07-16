@@ -9,6 +9,12 @@ import { ModulePage } from './components/ModulePage';
 import { AdminPanel } from './components/AdminPanel';
 import { ChangePasswordPage } from './components/ChangePasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import { MetasPage } from './components/MetasPage';
+
+// Importando as páginas que criamos
+import { AchievementsPage } from './components/AchievementsPage';
+import { ProfilePage } from './components/ProfilePage'; // Adicione a importação da página de perfil
+
 
 function App() {
   return (
@@ -18,6 +24,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
+            {/* Rota Principal (Dashboard) */}
             <Route
               path="/"
               element={
@@ -29,6 +36,7 @@ function App() {
               }
             />
 
+            {/* Rota dos Módulos */}
             <Route
               path="/module/:id"
               element={
@@ -40,6 +48,7 @@ function App() {
               }
             />
 
+            {/* Rota do Painel Admin */}
             <Route
               path="/admin"
               element={
@@ -51,6 +60,7 @@ function App() {
               }
             />
 
+            {/* Rota de Alterar Senha */}
             <Route
               path="/alterar-senha"
               element={
@@ -62,6 +72,43 @@ function App() {
               }
             />
 
+            {/* ROTA DE CONQUISTAS - ADICIONADA CORRETAMENTE */}
+            <Route
+              path="/conquistas"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AchievementsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ROTA DE PERFIL - ADICIONADA CORRETAMENTE */}
+            <Route
+              path="/perfil"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* ROTA DE METAS - ADICIONADA CORRETAMENTE */}
+            <Route
+              path="/metas"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <MetasPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Rota Coringa - Redireciona para a página inicial */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>

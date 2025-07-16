@@ -56,7 +56,8 @@ const LoginPage: React.FC = () => {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 rounded bg-[#1E1E1E] border border-gray-600 focus:outline-none focus:border-[#0AFF0F]"
+              // A MUDANÇA ESTÁ AQUI: adicionei "text-white"
+              className="w-full px-4 py-2 rounded bg-[#1E1E1E] border border-gray-600 focus:outline-none focus:border-[#0AFF0F] text-white"
               placeholder="seu@email.com"
             />
           </div>
@@ -73,7 +74,8 @@ const LoginPage: React.FC = () => {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded bg-[#1E1E1E] border border-gray-600 focus:outline-none focus:border-[#0AFF0F]"
+              // E A MUDANÇA ESTÁ AQUI TAMBÉM: adicionei "text-white"
+              className="w-full px-4 py-2 rounded bg-[#1E1E1E] border border-gray-600 focus:outline-none focus:border-[#0AFF0F] text-white"
               placeholder="Digite sua senha"
             />
           </div>
