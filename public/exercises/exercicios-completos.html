@@ -1280,5 +1280,34 @@
         </div>
 
     </div>
+    <script>
+  function enviarResultadoParaPortal(pontos, totalDeQuestoes) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const moduleId = parseInt(urlParams.get('moduleId'), 10);
+
+    if (!moduleId) {
+      console.error("ID do Módulo não foi encontrado na URL do iframe.");
+      return;
+    }
+
+    const resultado = {
+      type: 'exerciseResult',
+      payload: {
+        moduleId: moduleId,
+        score: pontos,
+        totalQuestions: totalDeQuestoes,
+      }
+    };
+    
+    // Este endereço deve ser exatamente o domínio onde seu portal está hospedado
+    const portalOrigin = 'https://portalcursovap.fipei.com.br'; 
+    window.parent.postMessage(resultado, portalOrigin); 
+  }
+
+  // Exemplo de como você chamaria esta função no seu quiz
+  // Suponha que no final do quiz o aluno acertou 8 de 10 perguntas.
+  // Você chamaria:
+  // enviarResultadoParaPortal(8, 10);
+</script>
 </body>
 </html>

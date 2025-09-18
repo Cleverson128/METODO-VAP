@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, BookOpen, Trophy, Clock, Star } from 'lucide-react';
+import { LogOut, User, BookOpen, Trophy, Star } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,13 +9,6 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
-
-  const formatTime = (minutes: number): string => {
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  };
 
   const unlockedAchievements = user?.achievements.filter(a => a.unlocked).length || 0;
 
@@ -54,10 +47,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <span className="text-gray-400">pts</span>
                   </div>
                   
-                  <div className="flex items-center space-x-2 bg-[#272525] px-3 py-2 rounded-lg">
-                    <Clock className="w-4 h-4 text-[#0AFF0F]" />
-                    <span className="font-medium">{formatTime(user.totalTimeStudied)}</span>
-                  </div>
                   
                   <div className="flex items-center space-x-2 bg-[#272525] px-3 py-2 rounded-lg">
                     <Star className="w-4 h-4 text-[#0AFF0F]" />

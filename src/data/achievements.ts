@@ -29,40 +29,13 @@ export const achievements: Achievement[] = [
     condition: { type: 'modules_completed', value: 5 }
   },
   {
-    id: 'time-warrior',
-    title: 'Guerreiro do Tempo',
-    description: 'Estude por mais de 10 horas (600 minutos)',
-    icon: 'Clock',
-    unlocked: false,
-    points: 200,
-    condition: { type: 'study_time', value: 600 }
-  },
-  {
     id: 'perfectionist',
-    title: 'Perfeccionista',
-    description: 'Obtenha 100% em 3 exercícios diferentes',
+    title: 'Mente Brilhante', // Title was changed to match the one in the database
+    description: 'Obtenha 100% em um quiz', // Description updated for clarity
     icon: 'Star',
     unlocked: false,
-    points: 250,
-    condition: { type: 'perfect_score', value: 3 }
-  },
-  {
-    id: 'speed-learner',
-    title: 'Aprendiz Veloz',
-    description: 'Complete um módulo em menos de 30 minutos',
-    icon: 'Zap',
-    unlocked: false,
-    points: 75,
-    condition: { type: 'speed', value: 30 }
-  },
-  {
-    id: 'marathon',
-    title: 'Maratonista dos Estudos',
-    description: 'Estude por mais de 20 horas (1200 minutos)',
-    icon: 'Activity',
-    unlocked: false,
-    points: 300,
-    condition: { type: 'study_time', value: 1200 }
+    points: 200, // Points updated to match the one in the database
+    condition: { type: 'perfect_score', value: 1 } // Value changed to 1 for a single perfect score
   },
   {
     id: 'scholar',
@@ -89,6 +62,16 @@ export const achievements: Achievement[] = [
     icon: 'Award',
     unlocked: false,
     points: 600,
-    condition: { type: 'modules_completed', value: 10 }
+    condition: { type: 'level_reached', value: 10 }
+  },
+  // **CORRECTION WAS HERE**: A comma was missing and the object was outside the array.
+  {
+    id: 'goal-master',
+    title: 'Mestre das Metas',
+    description: 'Cumpra sua primeira meta de estudos',
+    icon: 'Flag',
+    unlocked: false,
+    points: 150,
+    condition: { type: 'goals_completed', value: 1 }
   }
 ];

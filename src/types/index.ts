@@ -1,50 +1,57 @@
+// Define a estrutura de um Módulo do curso
 export interface Module {
   id: number;
   title: string;
   description: string;
-  videoUrl: string; // Real iframe URL will be provided
+  videoUrl: string;
   completed: boolean;
   locked: boolean;
   points: number;
-  estimatedTime: number; // in minutes
+  estimatedTime: number;
   exerciseFile: string;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role?: string; // 👈 Adiciona isso
-  totalPoints: number;
-  level: number;
-  totalTimeStudied: number;
-  completedModules: number[];
-  achievements: Achievement[];
-  currentStreak: number;
-  lastStudyDate: string;
-}
+// Define os tipos de condição para uma conquista
+export type AchievementConditionType = 
+  | 'modules_completed'
+  | 'study_time'
+  | 'streak'
+  | 'perfect_score'
+  | 'speed'
+  | 'total_points'
+  | 'level_reached'
+  | 'goals_completed';
 
+// Define a estrutura de uma Conquista
 export interface Achievement {
   id: string;
   title: string;
   description: string;
   icon: string;
   unlocked: boolean;
-  unlockedAt?: Date;
   points: number;
   condition: {
-    type: 'modules_completed' | 'study_time' | 'streak' | 'perfect_score' | 'speed';
+    type: AchievementConditionType;
     value: number;
   };
 }
 
-export interface StudySession {
-  moduleId: number;
-  startTime: Date;
-  endTime?: Date;
-  duration: number; // in minutes
+// Define a estrutura de um usuário da aplicação
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string; // <<< ADICIONADO AQUI
+  totalPoints: number;
+  level: number;
+  completedModules: number[];
+  achievements: Achievement[];
+  totalTimeStudied: number;
+  currentStreak: number;
+  lastStudyDate: string;
 }
 
+// Define o resultado de um exercício
 export interface ExerciseResult {
   moduleId: number;
   score: number;

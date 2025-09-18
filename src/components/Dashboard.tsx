@@ -1,5 +1,4 @@
-// src/components/Dashboard.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react'; // Adicione useEffect
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -7,11 +6,11 @@ import { supabase } from '../lib/supabase';
 import { modules as staticModules } from '../data/modules';
 import { ModuleCard } from './ModuleCard';
 import { GamificationInfoModal } from './GamificationInfoModal';
-import { Trophy, Target, Clock, BookOpen, Star, Award, Calendar, TrendingUp, LogOut, ShieldCheck, UserCog, KeyRound, FileDown, HelpCircle } from 'lucide-react';
-
+import { Trophy, Target, BookOpen, Star, Award, TrendingUp, LogOut, ShieldCheck, UserCog, KeyRound, FileDown, HelpCircle } from 'lucide-react';
+import { checkAndRewardGoals } from '../lib/gamification'; // Importe a nova função
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -22,9 +21,19 @@ export const Dashboard: React.FC = () => {
     totalPoints = 0,
     level = 1,
     achievements = [],
-    totalTimeStudied = 0,
   } = user || {};
-
+useEffect(() => {
+    const checkGoals = async () => {
+      if (user) {
+        const goalsWereCompleted = await checkAndRewardGoals(user);
+        if (goalsWereCompleted) {
+          // Se alguma meta foi cumprida, atualiza os dados da UI
+          refreshUser();
+        }
+      }
+    };
+    checkGoals();
+  }, [user, refreshUser]); // Roda quando o usuário carrega
   const modules = useMemo(() => {
     return staticModules.map(module => {
         const isCompleted = completedModuleIds.includes(module.id);
@@ -64,13 +73,6 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const formatTime = (minutes: number): string => {
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  };
-
   const getNextLevel = () => {
     const pointsForNext = level * 500;
     const pointsNeeded = pointsForNext - totalPoints;
@@ -96,10 +98,9 @@ export const Dashboard: React.FC = () => {
             <div className="w-full md:w-64"><div className="flex items-center justify-between text-sm mb-2"><span>Progresso</span><span className="font-medium">{Math.round(progressPercentage)}%</span></div><div className="bg-gray-700 rounded-full h-3"><motion.div className="bg-[#0AFF0F] h-3 rounded-full" initial={{ width: 0 }} animate={{ width: `${progressPercentage}%` }} transition={{ duration: 1, delay: 0.5 }} /></div></div>
           </div>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="bg-[#1E1E1E] rounded-xl p-6 border border-gray-700 hover:border-[#0AFF0F]/50 transition-colors"><div className="flex items-center space-x-3 mb-4"><div className="w-12 h-12 bg-[#0AFF0F]/10 rounded-lg flex items-center justify-center"><Trophy className="w-6 h-6 text-[#0AFF0F]" /></div><div><p className="text-gray-400 text-sm">Total de Pontos</p><p className="text-2xl font-bold">{totalPoints}</p></div></div>{pointsNeeded > 0 && (<div className="text-xs text-gray-500">{pointsNeeded} pts para o próximo nível</div>)}</div>
           <div className="bg-[#1E1E1E] rounded-xl p-6 border border-gray-700 hover:border-[#0AFF0F]/50 transition-colors"><div className="flex items-center space-x-3 mb-4"><div className="w-12 h-12 bg-[#0AFF0F]/10 rounded-lg flex items-center justify-center"><Target className="w-6 h-6 text-[#0AFF0F]" /></div><div><p className="text-gray-400 text-sm">Nível Atual</p><p className="text-2xl font-bold">{level}</p></div></div><div className="flex items-center space-x-2"><div className="flex-1 bg-gray-700 rounded-full h-2"><div className="bg-[#0AFF0F] h-2 rounded-full" style={{ width: `${(totalPoints % 500) / 5}%` }} /></div><Star className="w-4 h-4 text-[#0AFF0F]" /></div></div>
-          <div className="bg-[#1E1E1E] rounded-xl p-6 border border-gray-700 hover:border-[#0AFF0F]/50 transition-colors"><div className="flex items-center space-x-3 mb-4"><div className="w-12 h-12 bg-[#0AFF0F]/10 rounded-lg flex items-center justify-center"><Clock className="w-6 h-6 text-[#0AFF0F]" /></div><div><p className="text-gray-400 text-sm">Tempo de Estudo</p><p className="text-2xl font-bold">{formatTime(totalTimeStudied)}</p></div></div><div className="flex items-center space-x-1 text-xs text-gray-500"><Calendar className="w-3 h-3" /><span>Última atividade hoje</span></div></div>
           <div className="bg-[#1E1E1E] rounded-xl p-6 border border-gray-700 hover:border-[#0AFF0F]/50 transition-colors"><div className="flex items-center space-x-3 mb-4"><div className="w-12 h-12 bg-[#0AFF0F]/10 rounded-lg flex items-center justify-center"><Award className="w-6 h-6 text-[#0AFF0F]" /></div><div><p className="text-gray-400 text-sm">Conquistas</p><p className="text-2xl font-bold">{unlockedAchievementsCount}/10</p></div></div><div className="flex items-center space-x-1 text-xs text-gray-500"><TrendingUp className="w-3 h-3" /><span>Continue estudando!</span></div></div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="bg-[#1E1E1E] rounded-xl p-6 border border-gray-700">

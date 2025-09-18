@@ -1,87 +1,111 @@
-// src/components/ProfilePage.tsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, User, Save, Loader } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
-  const { user, updateUser } = useAuth(); // Usamos o contexto para obter o usuário
   const navigate = useNavigate();
+  const { user, refreshUser } = useAuth();
+  
   const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Popula o campo de nome com o nome atual do usuário
-    if (user?.name) {
+    if (user) {
       setName(user.name);
     }
   }, [user]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage('');
-    setError('');
+    if (!user || !name.trim()) return;
 
-    // Atualiza o 'data' (que inclui o nome) nas informações do usuário no Supabase
-    const { data, error: updateError } = await supabase.auth.updateUser({
-      data: { name: name },
+    setIsLoading(true);
+    setMessage('');
+
+    // 1. Atualiza os metadados do usuário na autenticação do Supabase
+    const { error: userUpdateError } = await supabase.auth.updateUser({
+      data: { name: name.trim() }
     });
 
-    if (updateError) {
-      setError(`Erro ao atualizar perfil: ${updateError.message}`);
-    } else if (data.user) {
-      // IMPORTANTE: Atualiza o usuário no contexto para refletir a mudança em toda a aplicação
-      if (updateUser) {
-        updateUser(data.user);
-      }
-      setMessage('Perfil atualizado com sucesso!');
+    if (userUpdateError) {
+      setMessage('Erro ao atualizar o nome.');
+      setIsLoading(false);
+      console.error(userUpdateError);
+      return;
     }
-    setLoading(false);
+    
+    // 2. Atualiza a tabela 'profiles' se ela também tiver um campo 'name' (opcional, mas bom ter)
+    // Se não tiver, pode remover este bloco.
+    const { error: profileUpdateError } = await supabase
+      .from('profiles')
+      .update({ name: name.trim() })
+      .eq('id', user.id);
+
+    if (profileUpdateError) {
+        // Não tratamos como um erro fatal, mas registramos no console
+        console.error("Aviso: Falha ao atualizar o nome na tabela 'profiles'.", profileUpdateError);
+    }
+
+    // 3. Atualiza os dados no app
+    await refreshUser();
+    
+    setIsLoading(false);
+    setMessage('Nome atualizado com sucesso!');
   };
 
-  return (
-    <div className="space-y-6 text-white max-w-2xl mx-auto p-4 md:p-0">
-      <button onClick={() => navigate('/dashboard')} className="text-[#0AFF0F] hover:underline mb-4 inline-block">
-        &larr; Voltar para o Dashboard
-      </button>
-      <h1 className="text-3xl font-bold">Editar Perfil</h1>
+  if (!user) {
+    return <div>Carregando perfil...</div>;
+  }
 
-      <form onSubmit={handleUpdateProfile} className="bg-[#1E1E1E] rounded-xl p-6 border border-gray-700 space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-2">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={user?.email || ''}
-            disabled
-            className="w-full p-2 rounded border border-gray-600 bg-[#272525] text-gray-400 cursor-not-allowed"
-          />
+  return (
+    <div className="space-y-6 max-w-2xl mx-auto">
+      <button onClick={() => navigate('/')} className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors">
+        <ArrowLeft className="w-5 h-5" />
+        <span>Voltar para o Dashboard</span>
+      </button>
+
+      <div className="bg-[#1E1E1E] p-8 rounded-2xl border border-gray-700">
+        <div className="flex items-center space-x-4 mb-8">
+          <div className="w-16 h-16 bg-[#0AFF0F] rounded-full flex items-center justify-center">
+            <User className="w-8 h-8 text-black" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">{user.name}</h1>
+            <p className="text-gray-400">{user.email}</p>
+          </div>
         </div>
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-400 mb-2">
-            Nome Completo
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 rounded border border-gray-600 bg-[#272525] text-white focus:ring-[#0AFF0F] focus:border-[#0AFF0F]"
-          />
-        </div>
-        <div>
-          <button type="submit" disabled={loading} className="w-full bg-[#0AFF0F] text-black p-3 rounded-lg font-bold hover:bg-[#0AFF0F]/90 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
-            {loading ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
-        </div>
-      </form>
-      {message && <p className="text-center text-green-400 mt-4">{message}</p>}
-      {error && <p className="text-center text-red-400 mt-4">{error}</p>}
+        
+        <form onSubmit={handleUpdateProfile}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">Nome Completo</label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-[#272525] border border-gray-600 rounded-lg p-3 text-white focus:ring-[#0AFF0F] focus:border-[#0AFF0F]"
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="mt-6 flex items-center justify-between">
+            <button
+              type="submit"
+              disabled={isLoading || name === user.name}
+              className="flex items-center justify-center gap-2 bg-[#0AFF0F] text-black px-6 py-3 rounded-lg font-bold hover:bg-[#0AFF0F]/90 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
+            >
+              {isLoading ? <Loader className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5" />}
+              <span>{isLoading ? 'Salvando...' : 'Salvar Alterações'}</span>
+            </button>
+            {message && <p className="text-sm text-green-400">{message}</p>}
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

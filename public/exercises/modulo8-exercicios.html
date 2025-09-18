@@ -97,6 +97,7 @@
             border-radius: 5px;
             text-align: center;
             font-weight: bold;
+            color: black;
         }
         .result.success {
             background: #d4edda;
@@ -181,6 +182,9 @@
     </div>
 
     <script>
+        // --- SCRIPT COMPLETO E CORRIGIDO ---
+
+        // GABARITO PARA AS RESPOSTAS DO MÓDULO 8
         const correctAnswers = {
             '1': 'c',
             '2': 'c', 
@@ -189,19 +193,48 @@
             '5': 'b'
         };
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const moduleId = urlParams.get('moduleId');
+        const storageKey = `quiz_answers_module_${moduleId}`;
+
+        function saveAnswer(questionNum, answer) {
+            const answers = JSON.parse(localStorage.getItem(storageKey)) || {};
+            answers[questionNum] = answer;
+            localStorage.setItem(storageKey, JSON.stringify(answers));
+        }
+
+        function loadAnswers() {
+            const savedAnswers = JSON.parse(localStorage.getItem(storageKey));
+            if (savedAnswers) {
+                Object.keys(savedAnswers).forEach(questionNum => {
+                    const answer = savedAnswers[questionNum];
+                    const question = document.querySelector(`[data-question="${questionNum}"]`);
+                    if (question) {
+                        const optionToSelect = question.querySelector(`[data-answer="${answer}"]`);
+                        if (optionToSelect) {
+                            question.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                            optionToSelect.classList.add('selected');
+                        }
+                    }
+                });
+            }
+        }
+
         document.querySelectorAll('.option').forEach(option => {
             option.addEventListener('click', function() {
-                const question = this.closest('.question');
-                const options = question.querySelectorAll('.option');
+                const questionDiv = this.closest('.question');
+                const questionNum = questionDiv.getAttribute('data-question');
+                const answer = this.getAttribute('data-answer');
                 
-                options.forEach(opt => opt.classList.remove('selected'));
+                questionDiv.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
                 this.classList.add('selected');
+                saveAnswer(questionNum, answer);
             });
         });
 
         function checkAnswers() {
             let score = 0;
-            let totalQuestions = Object.keys(correctAnswers).length;
+            const totalQuestions = Object.keys(correctAnswers).length;
             
             Object.keys(correctAnswers).forEach(questionNum => {
                 const question = document.querySelector(`[data-question="${questionNum}"]`);
@@ -210,7 +243,6 @@
                 
                 if (selectedOption) {
                     const selectedAnswer = selectedOption.getAttribute('data-answer');
-                    
                     if (selectedAnswer === correctAnswer) {
                         selectedOption.classList.add('correct');
                         score++;
@@ -237,19 +269,36 @@
             }
             
             scoreDiv.textContent = `Pontuação: ${score}/${totalQuestions} (${Math.round((score/totalQuestions)*100)}%)`;
-            
             resultDiv.style.display = 'block';
             scoreDiv.style.display = 'block';
+
+            enviarResultadoParaPortal(score, totalQuestions);
         }
 
         function resetQuiz() {
             document.querySelectorAll('.option').forEach(option => {
                 option.classList.remove('selected', 'correct', 'incorrect');
             });
-            
             document.getElementById('result').style.display = 'none';
             document.getElementById('score').style.display = 'none';
+            localStorage.removeItem(storageKey);
         }
+
+        function enviarResultadoParaPortal(pontos, totalDeQuestoes) {
+            if (!moduleId) {
+                console.error("ID do Módulo não foi encontrado.");
+                return;
+            }
+            const resultado = {
+                type: 'exerciseResult',
+                payload: { moduleId: parseInt(moduleId, 10), score: pontos, totalQuestions: totalDeQuestoes }
+            };
+            const portalOrigin = window.location.protocol + "//" + window.location.host;
+            console.log(`[PASSO 1 de 3] O Quiz do Módulo ${moduleId} está ENVIANDO a pontuação:`, resultado, 'para a origem:', portalOrigin);
+            window.parent.postMessage(resultado, portalOrigin); 
+        }
+
+        document.addEventListener('DOMContentLoaded', loadAnswers);
     </script>
 </body>
 </html>

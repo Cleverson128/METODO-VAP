@@ -97,6 +97,7 @@
             border-radius: 5px;
             text-align: center;
             font-weight: bold;
+            color: black;
         }
         .result.success {
             background: #d4edda;
@@ -122,52 +123,52 @@
         <h1>Módulo 2 - Exercícios: Análise de Valor</h1>
         
         <div class="question" data-question="1">
-            <h3>Questão 1: Qual é o primeiro passo na análise de valor?</h3>
+            <h3>Questão 1: Segundo estudos da Stanford Graduate School of Business mencionados no módulo, qual percentual do sucesso em vendas é atribuído ao mindset?</h3>
             <div class="options">
-                <div class="option" data-answer="a">a) Implementar soluções imediatamente</div>
-                <div class="option" data-answer="b">b) Identificar e definir as funções</div>
-                <div class="option" data-answer="c">c) Reduzir custos indiscriminadamente</div>
-                <div class="option" data-answer="d">d) Aumentar a complexidade do produto</div>
+                <div class="option" data-answer="a">a) 50%</div>
+                <div class="option" data-answer="b">b) 60%</div>
+                <div class="option" data-answer="c">c) 70%</div>
+                <div class="option" data-answer="d">d) 80%</div>
             </div>
         </div>
 
         <div class="question" data-question="2">
-            <h3>Questão 2: O que caracteriza uma função primária?</h3>
+            <h3>Questão 2: Qual é o método desenvolvido por Martin Seligman e adaptado para vendas que é usado para transformar crenças limitantes?</h3>
             <div class="options">
-                <div class="option" data-answer="a">a) É opcional para o funcionamento</div>
-                <div class="option" data-answer="b">b) É a razão de existir do produto/serviço</div>
-                <div class="option" data-answer="c">c) Pode ser eliminada sem impacto</div>
-                <div class="option" data-answer="d">d) Serve apenas para decoração</div>
+                <div class="option" data-answer="a">a) Método RISE</div>
+                <div class="option" data-answer="b">b) Método ABCDE</div>
+                <div class="option" data-answer="c">c) Método STOP</div>
+                <div class="option" data-answer="d">d) Método 5-25</div>
             </div>
         </div>
 
         <div class="question" data-question="3">
-            <h3>Questão 3: Na matriz valor x custo, qual quadrante é ideal?</h3>
+            <h3>Questão 3: Segundo a pesquisa mencionada no módulo, vendedores de elite fazem quantas vezes mais perguntas que vendedores médios?</h3>
             <div class="options">
-                <div class="option" data-answer="a">a) Alto custo, baixo valor</div>
-                <div class="option" data-answer="b">b) Alto custo, alto valor</div>
-                <div class="option" data-answer="c">c) Baixo custo, alto valor</div>
-                <div class="option" data-answer="d">d) Baixo custo, baixo valor</div>
+                <div class="option" data-answer="a">a) 5x mais</div>
+                <div class="option" data-answer="b">b) 4x mais</div>
+                <div class="option" data-answer="c">c) 3x mais</div>
+                <div class="option" data-answer="d">d) 2x mais</div>
             </div>
         </div>
 
         <div class="question" data-question="4">
-            <h3>Questão 4: O que são funções secundárias?</h3>
+            <h3>Questão 4: Qual é a proporção ideal de tempo que um vendedor de elite dedica para ouvir versus falar durante uma conversa com cliente?</h3>
             <div class="options">
-                <div class="option" data-answer="a">a) Funções que não agregam valor</div>
-                <div class="option" data-answer="b">b) Funções que apoiam a função primária</div>
-                <div class="option" data-answer="c">c) Funções desnecessárias</div>
-                <div class="option" data-answer="d">d) Funções que encarecem o produto</div>
+                <div class="option" data-answer="a">a) 60% ouvindo vs. 40% falando</div>
+                <div class="option" data-answer="b">b) 70% ouvindo vs. 30% falando</div>
+                <div class="option" data-answer="c">c) 80% ouvindo vs. 20% falando</div>
+                <div class="option" data-answer="d">d) 50% ouvindo vs. 50% falando</div>
             </div>
         </div>
 
         <div class="question" data-question="5">
-            <h3>Questão 5: Qual é o objetivo principal da análise funcional?</h3>
+            <h3>Questão 5: Segundo a Teoria da Autodeterminação aplicada em vendas, quais são os três componentes da motivação sustentável?</h3>
             <div class="options">
-                <div class="option" data-answer="a">a) Aumentar a complexidade</div>
-                <div class="option" data-answer="b">b) Otimizar a relação valor-custo</div>
-                <div class="option" data-answer="c">c) Reduzir qualidade</div>
-                <div class="option" data-answer="d">d) Aumentar preços</div>
+                <div class="option" data-answer="a">a) Disciplina, Resiliência e Foco</div>
+                <div class="option" data-answer="b">b) Autonomia, Competência e Propósito</div>
+                <div class="option" data-answer="c">c) Proatividade, Empatia e Persistência</div>
+                <div class="option" data-answer="d">d) Planejamento, Execução e Análise</div>
             </div>
         </div>
 
@@ -181,27 +182,59 @@
     </div>
 
     <script>
+        // --- SCRIPT COMPLETO E CORRIGIDO ---
+
+        // PASSO 1: ATUALIZE O GABARITO PARA AS RESPOSTAS DO MÓDULO 2
         const correctAnswers = {
-            '1': 'b',
-            '2': 'b', 
+            '1': 'd', // A resposta correta para a questão 1 é 'd' (80%)
+            '2': 'b',
             '3': 'c',
             '4': 'b',
             '5': 'b'
         };
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const moduleId = urlParams.get('moduleId');
+        const storageKey = `quiz_answers_module_${moduleId}`;
+
+        function saveAnswer(questionNum, answer) {
+            const answers = JSON.parse(localStorage.getItem(storageKey)) || {};
+            answers[questionNum] = answer;
+            localStorage.setItem(storageKey, JSON.stringify(answers));
+        }
+
+        function loadAnswers() {
+            const savedAnswers = JSON.parse(localStorage.getItem(storageKey));
+            if (savedAnswers) {
+                Object.keys(savedAnswers).forEach(questionNum => {
+                    const answer = savedAnswers[questionNum];
+                    const question = document.querySelector(`[data-question="${questionNum}"]`);
+                    if (question) {
+                        const optionToSelect = question.querySelector(`[data-answer="${answer}"]`);
+                        if (optionToSelect) {
+                            question.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                            optionToSelect.classList.add('selected');
+                        }
+                    }
+                });
+            }
+        }
+
         document.querySelectorAll('.option').forEach(option => {
             option.addEventListener('click', function() {
-                const question = this.closest('.question');
-                const options = question.querySelectorAll('.option');
+                const questionDiv = this.closest('.question');
+                const questionNum = questionDiv.getAttribute('data-question');
+                const answer = this.getAttribute('data-answer');
                 
-                options.forEach(opt => opt.classList.remove('selected'));
+                questionDiv.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
                 this.classList.add('selected');
+                saveAnswer(questionNum, answer);
             });
         });
 
         function checkAnswers() {
             let score = 0;
-            let totalQuestions = Object.keys(correctAnswers).length;
+            const totalQuestions = Object.keys(correctAnswers).length;
             
             Object.keys(correctAnswers).forEach(questionNum => {
                 const question = document.querySelector(`[data-question="${questionNum}"]`);
@@ -210,7 +243,6 @@
                 
                 if (selectedOption) {
                     const selectedAnswer = selectedOption.getAttribute('data-answer');
-                    
                     if (selectedAnswer === correctAnswer) {
                         selectedOption.classList.add('correct');
                         score++;
@@ -237,19 +269,36 @@
             }
             
             scoreDiv.textContent = `Pontuação: ${score}/${totalQuestions} (${Math.round((score/totalQuestions)*100)}%)`;
-            
             resultDiv.style.display = 'block';
             scoreDiv.style.display = 'block';
+
+            enviarResultadoParaPortal(score, totalQuestions);
         }
 
         function resetQuiz() {
             document.querySelectorAll('.option').forEach(option => {
                 option.classList.remove('selected', 'correct', 'incorrect');
             });
-            
             document.getElementById('result').style.display = 'none';
             document.getElementById('score').style.display = 'none';
+            localStorage.removeItem(storageKey);
         }
+
+        function enviarResultadoParaPortal(pontos, totalDeQuestoes) {
+            if (!moduleId) {
+                console.error("ID do Módulo não foi encontrado.");
+                return;
+            }
+            const resultado = {
+                type: 'exerciseResult',
+                payload: { moduleId: parseInt(moduleId, 10), score: pontos, totalQuestions: totalDeQuestoes }
+            };
+            const portalOrigin = window.location.protocol + "//" + window.location.host;
+            console.log(`[PASSO 1 de 3] O Quiz do Módulo ${moduleId} está ENVIANDO a pontuação:`, resultado, 'para a origem:', portalOrigin);
+            window.parent.postMessage(resultado, portalOrigin); 
+        }
+
+        document.addEventListener('DOMContentLoaded', loadAnswers);
     </script>
 </body>
 </html>

@@ -1,8 +1,7 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import { User as AppUser } from '../types';
-import { achievements as allAchievementsData } from '../data/achievements';
+import { User as AppUser, Achievement } from '../types';
 import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
@@ -30,11 +29,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('total_points, level, completed_modules')
+        .select('*') // Pega todos os dados do perfil, incluindo a nova 'role'
         .eq('id', supabaseUser.id)
         .single();
 
       if (profileError) throw profileError;
+
+      const { data: allDbAchievements, error: allAchievementsError } = await supabase
+        .from('achievements')
+        .select('*');
+      
+      if (allAchievementsError) throw allAchievementsError;
 
       const { data: unlockedAchievementsData, error: achievementsError } = await supabase
         .from('user_achievements')
@@ -43,17 +48,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (achievementsError) throw achievementsError;
 
-      const unlockedIds = new Set(unlockedAchievementsData.map(a => a.achievement_id));
+      const unlockedIds = new Set((unlockedAchievementsData || []).map(a => a.achievement_id));
       
+      const userAchievements: Achievement[] = (allDbAchievements || []).map(dbAch => ({
+        id: dbAch.slug,
+        title: dbAch.title,
+        description: dbAch.description,
+        icon: dbAch.icon_name,
+        points: dbAch.points_reward,
+        unlocked: unlockedIds.has(dbAch.id),
+        condition: { type: dbAch.slug, value: 0 }
+      }));
+
       const fullUser: AppUser = {
         id: supabaseUser.id,
         email: supabaseUser.email || '',
         name: supabaseUser.user_metadata.name || 'Usuário',
+        role: profileData.role || 'user', // <<< ADICIONADO AQUI
         totalPoints: profileData.total_points || 0,
         level: profileData.level || 1,
         completedModules: profileData.completed_modules || [],
-        achievements: allAchievementsData.map(a => ({ ...a, unlocked: unlockedIds.has(a.id) })),
-        totalTimeStudied: 0, 
+        totalTimeStudied: profileData.total_time_studied || 0,
+        achievements: userAchievements,
         currentStreak: 0,
         lastStudyDate: new Date().toISOString().split('T')[0]
       };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Module } from '../types';
-import { Lock, CheckCircle, Play, Clock, Trophy, Target } from 'lucide-react';
+import { Lock, CheckCircle, Play, Trophy } from 'lucide-react'; // Ícone 'Target' removido
 import { useStudy } from '../context/StudyContext';
 
 interface ModuleCardProps {
@@ -11,18 +11,10 @@ interface ModuleCardProps {
 }
 
 export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, index }) => {
-  const { getTotalTimeForModule, getModuleExerciseScore } = useStudy();
+  const { getModuleExerciseScore } = useStudy();
   
-  const totalTime = getTotalTimeForModule(module.id);
   const exerciseScore = getModuleExerciseScore(module.id);
   
-  const formatTime = (minutes: number): string => {
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  };
-
   const getStatusColor = () => {
     if (module.completed) return 'border-[#0AFF0F] bg-[#0AFF0F]/5';
     if (module.locked) return 'border-gray-600';
@@ -85,19 +77,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, index }
               <Trophy className="w-4 h-4 text-[#0AFF0F]" />
               <span className="text-gray-300">{module.points} pts</span>
             </div>
-            <div className="flex items-center space-x-1">
-              <Target className="w-4 h-4 text-[#0AFF0F]" />
-              <span className="text-gray-300">{module.estimatedTime}min</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            {totalTime > 0 && (
-              <div className="flex items-center space-x-1">
-                <Clock className="w-4 h-4 text-[#0AFF0F]" />
-                <span className="text-gray-300">{formatTime(totalTime)}</span>
-              </div>
-            )}
+            {/* Bloco de TEMPO ESTIMADO foi removido daqui */}
           </div>
         </div>
 
@@ -114,11 +94,6 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, index }
                 BLOQUEADO
               </span>
             )}
-            {!module.completed && !module.locked && totalTime > 0 && (
-              <span className="text-yellow-400 text-xs font-medium bg-yellow-400/10 px-2 py-1 rounded-full">
-                EM PROGRESSO
-              </span>
-            )}
           </div>
         </div>
 
@@ -127,7 +102,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, index }
           <motion.div 
             className="bg-[#0AFF0F] h-2 rounded-full transition-all duration-500"
             initial={{ width: 0 }}
-            animate={{ width: module.completed ? '100%' : totalTime > 0 ? '50%' : '0%' }}
+            animate={{ width: module.completed ? '100%' : '0%' }}
             transition={{ duration: 1, delay: index * 0.1 }}
           />
         </div>
