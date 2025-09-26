@@ -1,20 +1,40 @@
+# Configurações de build (mantidas)
 [build]
   command = "npm run build"
   publish = "dist"
 
+# Configurações de Functions (mantidas)
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Configurações de desenvolvimento local (mantidas)
 [dev]
   framework = "vite"
   command = "npm run dev"
   targetPort = 5173
   port = 8888
   autoLaunch = true
-  envFiles = [".env.local"]  # ✅ ESSA LINHA CARREGA VARIÁVEIS DO .env.local
+  envFiles = [".env.local"]
 
+# --- REGRAS DE REDIRECIONAMENTO ---
+
+# Regra existente para as funções Netlify (mantida no topo por ser específica)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
+  status = 200
+
+# NOVA REGRA: Exceção para a pasta de exercícios.
+# Garante que os arquivos HTML dentro de /exercises sejam acessados diretamente.
+[[redirects]]
+  from = "/exercises/*"
+  to = "/exercises/:splat"
+  status = 200
+
+# NOVA REGRA: Fallback para a sua aplicação React (Single Page App).
+# Esta deve ser a ÚLTIMA regra, pois captura todas as outras rotas.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
