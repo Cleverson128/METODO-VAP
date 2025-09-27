@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Module } from '../types';
-import { Lock, CheckCircle, Play, Trophy } from 'lucide-react'; // Ícone 'Target' removido
+import { Lock, CheckCircle, Play, Trophy } from 'lucide-react';
 import { useStudy } from '../context/StudyContext';
 
 interface ModuleCardProps {
@@ -12,9 +12,11 @@ interface ModuleCardProps {
 
 export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, index }) => {
   const { getModuleExerciseScore } = useStudy();
-  
-  const exerciseScore = getModuleExerciseScore(module.id);
-  
+
+  // Garante número válido
+  const rawScore = getModuleExerciseScore(module.id);
+  const exerciseScore = Number.isFinite(rawScore) ? rawScore : null;
+
   const getStatusColor = () => {
     if (module.completed) return 'border-[#0AFF0F] bg-[#0AFF0F]/5';
     if (module.locked) return 'border-gray-600';
@@ -46,11 +48,15 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, index }
       <div className="absolute top-4 right-4 flex items-center space-x-2">
         {getStatusIcon()}
         {exerciseScore !== null && (
-          <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-            exerciseScore >= 80 ? 'bg-[#0AFF0F]/20 text-[#0AFF0F]' : 
-            exerciseScore >= 60 ? 'bg-yellow-500/20 text-yellow-400' : 
-            'bg-red-500/20 text-red-400'
-          }`}>
+          <div
+            className={`px-2 py-1 rounded-full text-xs font-medium ${
+              exerciseScore >= 80
+                ? 'bg-[#0AFF0F]/20 text-[#0AFF0F]'
+                : exerciseScore >= 60
+                ? 'bg-yellow-500/20 text-yellow-400'
+                : 'bg-red-500/20 text-red-400'
+            }`}
+          >
             {exerciseScore}%
           </div>
         )}
@@ -77,7 +83,6 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, index }
               <Trophy className="w-4 h-4 text-[#0AFF0F]" />
               <span className="text-gray-300">{module.points} pts</span>
             </div>
-            {/* Bloco de TEMPO ESTIMADO foi removido daqui */}
           </div>
         </div>
 
@@ -99,7 +104,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, index }
 
         {/* Progress Bar */}
         <div className="bg-gray-700 rounded-full h-2 overflow-hidden">
-          <motion.div 
+          <motion.div
             className="bg-[#0AFF0F] h-2 rounded-full transition-all duration-500"
             initial={{ width: 0 }}
             animate={{ width: module.completed ? '100%' : '0%' }}
