@@ -16,7 +16,6 @@ export const ModulePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
-  // CORREÇÃO: 'exerciseResults' foi removido pois não é usado aqui.
   const { addExerciseResult } = useStudy();
   const [showExercises, setShowExercises] = useState(false);
   const [completionInfo, setCompletionInfo] = useState<CompletionInfo | null>(null);
@@ -69,16 +68,13 @@ export const ModulePage: React.FC = () => {
     try {
       const updatedCompletedModules = [...user.completedModules, module.id];
       const basePoints = user.totalPoints + module.points;
-      
       const { data: allDbAchievements } = await supabase.from('achievements').select('id, slug, points_reward');
       const { data: unlockedData } = await supabase.from('user_achievements').select('achievement_id').eq('user_id', user.id);
       const unlockedUUIDs = new Set((unlockedData || []).map(a => a.achievement_id));
       const achievementsToCheck = (allDbAchievements || []).filter(a => !unlockedUUIDs.has(a.id));
-      
       let newlyUnlocked = [];
       let bonusPoints = 0;
       let finalLevel = Math.floor(basePoints / 500) + 1;
-
       for (const ach of achievementsToCheck) {
         let conditionMet = false;
         if (ach.slug === 'first-module' && updatedCompletedModules.length >= 1) conditionMet = true;
@@ -87,35 +83,37 @@ export const ModulePage: React.FC = () => {
         if (ach.slug === 'master' && updatedCompletedModules.length >= 12) conditionMet = true;
         if (ach.slug === 'marathon' && basePoints >= 1500) conditionMet = true;
         if (ach.slug === 'legendary' && user.level >= 10) conditionMet = true;
-        
         if (conditionMet) {
           newlyUnlocked.push({ user_id: user.id, achievement_id: ach.id });
           bonusPoints += ach.points_reward;
         }
       }
-      
       if (newlyUnlocked.length > 0) {
         await supabase.from('user_achievements').insert(newlyUnlocked);
         alert(`Parabéns! Você desbloqueou ${newlyUnlocked.length} nova(s) conquista(s)!`);
       }
-
       const finalTotalPoints = basePoints + bonusPoints;
       finalLevel = Math.floor(finalTotalPoints / 500) + 1;
-
       await supabase.from('profiles').update({
         completed_modules: updatedCompletedModules,
         total_points: finalTotalPoints,
         level: finalLevel,
       }).eq('id', user.id);
-
       setCompletionInfo({ title: module.title, points: module.points });
       await refreshUser();
-
     } catch (error) {
       console.error("ERRO CRÍTICO no processo de conclusão:", error);
     } finally {
       setIsCompleting(false);
     }
+  };
+
+  // --- LÓGICA DO IFRAME CORRIGIDA ---
+  const getExerciseUrl = () => {
+    if (!module) return '';
+    // Constrói a URL completa para o exercício
+    const origin = window.location.origin; // ex: https://portalcursovap.fipei.com.br
+    return `${origin}/exercises/${module.exerciseFile}?moduleId=${module.id}`;
   };
 
   if (!module) { return <div className="text-center p-8">Módulo não encontrado.</div>; }
@@ -131,11 +129,10 @@ export const ModulePage: React.FC = () => {
         </div>
       </div>
       <div className="flex-1 bg-black">
-        {!showExercises ? (
-            <iframe src={module.videoUrl} className="w-full h-full" frameBorder="0" allowFullScreen title={`Aula - ${module.title}`} />
-        ) : (
-            <iframe src={`/exercises/${module.exerciseFile}?moduleId=${module.id}`} className="w-full h-full" style={{ border: 'none' }} title={`Exercícios - ${module.title}`} />
-        )}
+        {!showExercises 
+            ? <iframe src={module.videoUrl} className="w-full h-full" frameBorder="0" allowFullScreen title={`Aula - ${module.title}`} />
+            : <iframe src={getExerciseUrl()} className="w-full h-full" style={{ border: 'none' }} title={`Exercícios - ${module.title}`} />
+        }
       </div>
     </motion.div>
   );
@@ -154,22 +151,16 @@ export const ModulePage: React.FC = () => {
           </div>
         </motion.div>
         
-        {/* CORREÇÃO: A propriedade 'delay' foi movida para dentro de 'transition' */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex items-center justify-between bg-[#1E1E1E] rounded-lg p-1 border border-gray-700">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{delay: 0.2}} className="flex items-center justify-between bg-[#1E1E1E] rounded-lg p-1 border border-gray-700">
             <div className="flex space-x-1 flex-1"><button onClick={() => setShowExercises(false)} className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${!showExercises ? 'bg-[#0AFF0F] text-black' : 'text-gray-400 hover:text-white'}`}>📚 Aulas do Módulo</button><button onClick={() => setShowExercises(true)} className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${showExercises ? 'bg-[#0AFF0F] text-black' : 'text-gray-400 hover:text-white'}`}>📝 Exercícios Práticos</button></div>
             <button onClick={toggleFullscreen} className="flex items-center space-x-2 bg-[#272525] hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors ml-2" title="Expandir para tela cheia"><Maximize className="w-4 h-4" /><span className="hidden sm:block">Tela Cheia</span></button>
         </motion.div>
         
-        {/* CORREÇÃO: A propriedade 'delay' foi movida para dentro de 'transition' */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-gray-700">
-            {!showExercises ? <div className="relative"><div className="aspect-video bg-black"><iframe src={module.videoUrl} className="w-full h-full" frameBorder="0" allowFullScreen title={`Aula - ${module.title}`} /></div></div> : <div className="p-6"><div className="flex items-center space-x-3 mb-6"><FileText className="w-6 h-6 text-[#0AFF0F]" /><h3 className="text-xl font-bold">Exercícios do Módulo {module.id}</h3></div><div className="bg-[#272525] rounded-lg border border-gray-600"><iframe src={`/exercises/${module.exerciseFile}?moduleId=${module.id}`} className="w-full h-[80vh]" style={{border: 'none'}} title={`Exercícios - ${module.title}`} /></div><div className="mt-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg"><p className="text-blue-400 text-sm">💡 <strong>Dica:</strong> Complete os exercícios para reforçar seu aprendizado. As respostas são verificadas automaticamente no próprio exercício.</p></div></div>}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{delay: 0.4}} className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-gray-700">
+            {!showExercises ? <div className="relative"><div className="aspect-video bg-black"><iframe src={module.videoUrl} className="w-full h-full" frameBorder="0" allowFullScreen title={`Aula - ${module.title}`} /></div></div> : <div className="p-6"><div className="flex items-center space-x-3 mb-6"><FileText className="w-6 h-6 text-[#0AFF0F]" /><h3 className="text-xl font-bold">Exercícios do Módulo {module.id}</h3></div><div className="bg-[#272525] rounded-lg border border-gray-600"><iframe src={getExerciseUrl()} className="w-full h-[80vh]" style={{border: 'none'}} title={`Exercícios - ${module.title}`} /></div><div className="mt-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg"><p className="text-blue-400 text-sm">💡 <strong>Dica:</strong> Complete os exercícios para reforçar seu aprendizado. As respostas são verificadas automaticamente no próprio exercício.</p></div></div>}
         </motion.div>
         
-        {/* CORREÇÃO: A propriedade 'delay' foi movida para dentro de 'transition' */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">{prevModule && <button onClick={() => navigate(`/module/${prevModule.id}`)} className="flex items-center space-x-2 bg-[#272525] border border-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors"><ArrowLeft className="w-4 h-4" /><span>Módulo Anterior</span></button>}</div>
-            <div className="flex items-center space-x-4">{!isCompleted && <button onClick={handleCompleteModule} disabled={isCompleting} className="flex items-center space-x-2 bg-[#0AFF0F] text-black px-6 py-3 rounded-lg font-medium hover:bg-[#0AFF0F]/90 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"><CheckCircle className="w-4 h-4" /><span>{isCompleting ? 'Salvando...' : 'Marcar como Concluído'}</span></button>}{nextModule && <button onClick={() => navigate(`/module/${nextModule.id}`)} disabled={nextModule.locked} className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-colors ${nextModule.locked ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-[#272525] border border-gray-600 hover:bg-gray-700'}`}><ArrowRight className="w-4 h-4" /><span>Próximo Módulo</span></button>}</div>
-        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{delay: 0.6}} className="flex items-center justify-between"><div className="flex items-center space-x-4">{prevModule && <button onClick={() => navigate(`/module/${prevModule.id}`)} className="flex items-center space-x-2 bg-[#272525] border border-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg transition-colors"><ArrowLeft className="w-4 h-4" /><span>Módulo Anterior</span></button>}</div><div className="flex items-center space-x-4">{!isCompleted && <button onClick={handleCompleteModule} disabled={isCompleting} className="flex items-center space-x-2 bg-[#0AFF0F] text-black px-6 py-3 rounded-lg font-medium hover:bg-[#0AFF0F]/90 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"><CheckCircle className="w-4 h-4" /><span>{isCompleting ? 'Salvando...' : 'Marcar como Concluído'}</span></button>}{nextModule && <button onClick={() => navigate(`/module/${nextModule.id}`)} disabled={nextModule.locked} className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-colors ${nextModule.locked ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-[#272525] border border-gray-600 hover:bg-gray-700'}`}><ArrowRight className="w-4 h-4" /><span>Próximo Módulo</span></button>}</div></motion.div>
       </div>
 
       <AnimatePresence>
