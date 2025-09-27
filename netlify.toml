@@ -1,21 +1,19 @@
-# Configurações de build para projetos Vite
+# Configurações de build para projetos Vite.
 [build]
   command = "npm run build"
   publish = "dist"
 
-# Regras para servir corretamente os exercícios
+# Regra de redirecionamento para a pasta de exercícios.
+# Esta regra específica deve vir ANTES da regra geral.
+# Ela diz ao Netlify: "Se um arquivo for pedido de /exercises/, sirva-o diretamente."
 [[redirects]]
   from = "/exercises/*"
   to = "/exercises/:splat"
   status = 200
-  force = true
 
-[[headers]]
-  for = "/exercises/*"
-  [headers.values]
-    Content-Type = "text/html; charset=utf-8"
-
-# Regra de redirecionamento geral para SPA (React)
+# Regra de redirecionamento geral para aplicações de página única (SPA) como o React.
+# Esta regra deve ser a ÚLTIMA.
+# Ela diz: "Para qualquer outro caminho, sirva a página principal (index.html)."
 [[redirects]]
   from = "/*"
   to = "/index.html"
