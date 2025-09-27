@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && copyfiles -u 1 \"public/exercises/**/*\" dist",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -36,6 +36,7 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
-    "vite": "^5.4.2"
+    "vite": "^5.4.2",
+    "vite-plugin-static-copy": "^3.1.2"
   }
 }
