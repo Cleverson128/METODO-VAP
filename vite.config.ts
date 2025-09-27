@@ -2,15 +2,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { viteStaticCopy } from 'vite-plugin-static-copy'; // 1. Importe o novo plugin
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // ... (toda a sua configuração do PWA pode continuar a mesma)
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png', 'exercises/**/*'],
+      
+      // ✅ ALTERAÇÃO FINAL E DECISIVA AQUI
+      workbox: {
+        navigateFallbackDenylist: [/^\/exercises/]
+      },
+
       manifest: {
         name: 'Método VAP',
         short_name: 'VAP',
@@ -39,12 +44,11 @@ export default defineConfig({
         ]
       }
     }),
-    // 2. Adicione a configuração do plugin de cópia
     viteStaticCopy({
       targets: [
         {
-          src: 'public/exercises', // A pasta que você quer copiar
-          dest: '.'             // O destino (a raiz da pasta 'dist')
+          src: 'public/exercises',
+          dest: '.'
         }
       ]
     })
