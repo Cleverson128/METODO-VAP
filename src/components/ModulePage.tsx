@@ -166,7 +166,7 @@ export const ModulePage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-lg font-bold">{module.title}</h2>
-            <p className="text-sm text-gray-400">{!showExercises ? '📺 Aula em Vídeo' : '📝 Exercícios Práticos'}</p>
+            <p className="text-sm text-gray-400">{!showExercises ? '📺 Aula do Módulo' : '📝 Exercícios Práticos'}</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
