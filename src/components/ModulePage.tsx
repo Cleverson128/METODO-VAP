@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, FileText, Trophy, Maximize, Minimize, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, FileText, Trophy, Maximize, Minimize, X, Video } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useStudy } from '../context/StudyContext';
 import { modules as staticModules } from '../data/modules';
@@ -55,6 +55,10 @@ export const ModulePage: React.FC = () => {
       isCompleted: completedModuleIds.includes(moduleId),
     };
   }, [moduleId, user?.completedModules]);
+
+  useEffect(() => {
+    setShowExercises(false); // Reseta para a aba de vídeo ao trocar de módulo
+  }, [moduleId]);
 
   useEffect(() => {
     const handleQuizResult = (event: MessageEvent) => {
@@ -120,14 +124,12 @@ export const ModulePage: React.FC = () => {
 
       if (newlyUnlocked.length > 0) {
         await supabase.from('user_achievements').insert(newlyUnlocked);
-
         await supabase
           .from('profiles')
           .update({
             total_points: finalPoints + bonusPoints,
           })
           .eq('id', user.id);
-
         alert(`Parabéns! Você desbloqueou ${newlyUnlocked.length} nova(s) conquista(s)!`);
       }
 
@@ -145,10 +147,11 @@ export const ModulePage: React.FC = () => {
     return <div className="text-center p-8">Módulo não encontrado.</div>;
   }
   if (module.locked) {
-    return <div className="text-center p-8">Este módulo está bloqueado.</div>;
+    return <div className="text-center p-8">Este módulo está bloqueado. Complete o módulo anterior para desbloquear.</div>;
   }
 
-  const exerciseSrc = `${process.env.PUBLIC_URL || ''}/exercises/${module.exerciseFile}?moduleId=${module.id}`;
+  // ✅ CORREÇÃO APLICADA AQUI
+  const exerciseSrc = `/exercises/${module.exerciseFile}?moduleId=${module.id}`;
 
   const FullscreenModal = () => (
     <motion.div
@@ -208,61 +211,143 @@ export const ModulePage: React.FC = () => {
   return (
     <>
       <div className="space-y-6">
-        {/* ... resto do JSX igual ao que você já tinha ... */}
+        {/* ✅ UI RECONSTRUÍDA ABAIXO */}
+        <header className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+          <div>
+            <button onClick={() => navigate('/dashboard')} className="flex items-center text-gray-400 hover:text-white mb-2">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar para os módulos
+            </button>
+            <h1 className="text-3xl font-bold">{`Módulo ${module.id}: ${module.title}`}</h1>
+            <p className="text-gray-400">{module.description}</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => prevModule && navigate(`/module/${prevModule.id}`)}
+              disabled={!prevModule}
+              className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => nextModule && navigate(`/module/${nextModule.id}`)}
+              disabled={!nextModule || nextModule.locked}
+              className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </header>
+
+        <div className="flex items-center space-x-2 border-b border-gray-700 mb-4">
+            <button onClick={() => setShowExercises(false)} className={`flex items-center space-x-2 py-3 px-4 transition-colors ${!showExercises ? 'border-b-2 border-[#0AFF0F] text-white' : 'text-gray-400 hover:text-white'}`}>
+                <Video className="w-5 h-5" />
+                <span>Aula</span>
+            </button>
+            <button onClick={() => setShowExercises(true)} className={`flex items-center space-x-2 py-3 px-4 transition-colors ${showExercises ? 'border-b-2 border-[#0AFF0F] text-white' : 'text-gray-400 hover:text-white'}`}>
+                <FileText className="w-5 h-5" />
+                <span>Exercícios</span>
+            </button>
+        </div>
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          transition={{ duration: 0.5 }}
           className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-gray-700"
         >
-          {!showExercises ? (
-            <div className="relative">
-              <div className="aspect-video bg-black">
-                <iframe
-                  src={module.videoUrl}
-                  className="w-full h-full"
-                  frameBorder="0"
-                  allowFullScreen
-                  title={`Aula - ${module.title}`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="p-6">
-              <div className="flex items-center space-x-3 mb-6">
-                <FileText className="w-6 h-6 text-[#0AFF0F]" />
-                <h3 className="text-xl font-bold">Exercícios do Módulo {module.id}</h3>
-              </div>
-              <div className="bg-[#272525] rounded-lg border border-gray-600">
-                <iframe
-                  src={exerciseSrc}
-                  className="w-full h-[80vh] rounded-lg"
-                  style={{ border: 'none' }}
-                  title={`Exercícios - ${module.title}`}
-                />
-              </div>
-              <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg">
-                <p className="text-blue-400 text-sm">
-                  💡 <strong>Dica:</strong> Complete os exercícios para reforçar seu aprendizado. As respostas são
-                  verificadas automaticamente no próprio exercício.
-                </p>
-              </div>
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={showExercises ? 'exercises' : 'video'}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {!showExercises ? (
+                <div className="relative group">
+                  <div className="aspect-video bg-black">
+                    <iframe
+                      src={module.videoUrl}
+                      className="w-full h-full"
+                      frameBorder="0"
+                      allowFullScreen
+                      title={`Aula - ${module.title}`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                  </div>
+                  <button onClick={toggleFullscreen} className="absolute top-3 right-3 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Maximize className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="p-4 sm:p-6">
+                  <div className="bg-[#272525] rounded-lg border border-gray-600">
+                    <iframe
+                      src={exerciseSrc}
+                      className="w-full h-[80vh] rounded-lg"
+                      style={{ border: 'none' }}
+                      title={`Exercícios - ${module.title}`}
+                    />
+                  </div>
+                  <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg">
+                    <p className="text-blue-400 text-sm">
+                      💡 <strong>Dica:</strong> Complete os exercícios para reforçar seu aprendizado. As respostas são verificadas automaticamente.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
-        {/* ... resto do JSX igual ao que você já tinha ... */}
+        
+        <div className="mt-6 flex justify-center">
+            <button
+                onClick={handleCompleteModule}
+                disabled={isCompleted || isCompleting}
+                className="w-full sm:w-auto flex items-center justify-center space-x-3 px-8 py-3 font-bold rounded-lg transition-transform transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed bg-[#0AFF0F] text-black disabled:bg-gray-600 disabled:text-gray-400"
+            >
+                {isCompleting ? (
+                    <span>Salvando...</span>
+                ) : isCompleted ? (
+                    <>
+                        <CheckCircle className="w-6 h-6" />
+                        <span>Módulo Concluído!</span>
+                    </>
+                ) : (
+                    <>
+                        <Trophy className="w-6 h-6" />
+                        <span>Concluir Módulo e Ganhar {module.points} Pontos</span>
+                    </>
+                )}
+            </button>
+        </div>
+
       </div>
 
       <AnimatePresence>
         {completionInfo && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
           >
-            {/* ... modal de conclusão ... */}
+            <div className="bg-[#1E1E1E] border border-[#0AFF0F] rounded-2xl p-8 text-center max-w-md w-full relative">
+                <Trophy className="w-16 h-16 text-[#0AFF0F] mx-auto mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Parabéns!</h2>
+                <p className="text-gray-300 mb-4">Você concluiu o módulo "{completionInfo.title}" com sucesso.</p>
+                <div className="bg-black/40 rounded-lg p-4 mb-6">
+                    <p className="text-lg">Você ganhou</p>
+                    <p className="text-4xl font-bold text-[#0AFF0F]">{completionInfo.points} PONTOS</p>
+                </div>
+                <button 
+                    onClick={() => setCompletionInfo(null)} 
+                    className="w-full bg-[#0AFF0F] text-black font-bold py-3 rounded-lg hover:brightness-90 transition-all"
+                >
+                    Continuar
+                </button>
+            </div>
           </motion.div>
         )}
         {isFullscreen && <FullscreenModal />}
