@@ -150,7 +150,6 @@ export const ModulePage: React.FC = () => {
     return <div className="text-center p-8">Este módulo está bloqueado. Complete o módulo anterior para desbloquear.</div>;
   }
 
-  // ✅ CORREÇÃO APLICADA AQUI
   const exerciseSrc = `/exercises/${module.exerciseFile}?moduleId=${module.id}`;
 
   const FullscreenModal = () => (
@@ -211,7 +210,6 @@ export const ModulePage: React.FC = () => {
   return (
     <>
       <div className="space-y-6">
-        {/* ✅ UI RECONSTRUÍDA ABAIXO */}
         <header className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <div>
             <button onClick={() => navigate('/dashboard')} className="flex items-center text-gray-400 hover:text-white mb-2">
@@ -282,13 +280,16 @@ export const ModulePage: React.FC = () => {
                 </div>
               ) : (
                 <div className="p-4 sm:p-6">
-                  <div className="bg-[#272525] rounded-lg border border-gray-600">
+                  <div className="relative group bg-[#272525] rounded-lg border border-gray-600">
                     <iframe
                       src={exerciseSrc}
                       className="w-full h-[80vh] rounded-lg"
                       style={{ border: 'none' }}
                       title={`Exercícios - ${module.title}`}
                     />
+                    <button onClick={toggleFullscreen} className="absolute top-3 right-3 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Maximize className="w-5 h-5" />
+                    </button>
                   </div>
                   <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg">
                     <p className="text-blue-400 text-sm">
