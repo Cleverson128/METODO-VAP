@@ -40,20 +40,25 @@ export const handler: Handler = async (event) => {
       user_metadata: { name: name } // Salva o nome do usuário no perfil
     });
 
-    if (createUserError && !createUserError.message.includes('User already registered')) {
+    // AQUI ESTÁ A CORREÇÃO: Adicionamos a verificação para a mensagem em português.
+    if (
+      createUserError && 
+      !createUserError.message.includes('User already registered') && 
+      !createUserError.message.includes('Um usuário com este endereço de e-mail já existe')
+    ) {
       console.error("Erro ao criar usuário no Supabase:", createUserError.message);
       return { statusCode: 500, body: 'Erro ao criar usuário' };
     }
 
     // PONTO-CHAVE: Gerar link de redefinição de senha para o primeiro acesso
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-        type: 'recovery', // 'recovery' força o usuário a criar uma nova senha
-        email: email,
+      type: 'recovery', // 'recovery' força o usuário a criar uma nova senha
+      email: email,
     });
 
     if (linkError) {
-        console.error("Erro ao gerar link de acesso:", linkError.message);
-        return { statusCode: 500, body: 'Erro ao gerar link de acesso' };
+      console.error("Erro ao gerar link de acesso:", linkError.message);
+      return { statusCode: 500, body: 'Erro ao gerar link de acesso' };
     }
     
     const magicLink = linkData.properties.action_link;
