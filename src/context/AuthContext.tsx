@@ -27,9 +27,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchUserProfile = useCallback(async (supabaseUser: SupabaseUser) => {
     try {
+      // Usamos a tabela 'users' em vez de 'profiles'
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*') // Pega todos os dados do perfil, incluindo a nova 'role'
+        .from('users')
+        .select('*') 
         .eq('id', supabaseUser.id)
         .single();
 
@@ -64,7 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: supabaseUser.id,
         email: supabaseUser.email || '',
         name: supabaseUser.user_metadata.name || 'Usuário',
-        role: profileData.role || 'user', // <<< ADICIONADO AQUI
+        role: profileData.role || 'user', 
         totalPoints: profileData.total_points || 0,
         level: profileData.level || 1,
         completedModules: profileData.completed_modules || [],
@@ -83,11 +84,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // Lógica corrigida para interceptar o link de recuperação/invite
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       const supabaseUser = session?.user;
+
       if (supabaseUser) {
         fetchUserProfile(supabaseUser);
+        
+        // LÓGICA DE REDIRECIONAMENTO PARA PRIMEIRO ACESSO
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            const urlHash = window.location.hash;
+            
+            // Verifica se o hash da URL contém o token e o tipo 'recovery' ou 'signup'
+            if (urlHash.includes('type=recovery') || urlHash.includes('type=signup')) {
+                // 1. Limpa o hash da URL para evitar loops e o vazamento do token.
+                // Isso não é estritamente necessário para o redirecionamento, mas é boa prática.
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                
+                // 2. Redireciona o usuário para a rota de alteração de senha
+                // O 'replace' evita que a página de login volte ao histórico
+                window.location.replace('/alterar-senha');
+                return; // Interrompe o restante da lógica de sessão
+            }
+        }
+
       } else {
         setUser(null);
         setLoading(false);
