@@ -41,14 +41,15 @@ export const handler: Handler = async (event) => {
     });
 
     /**
-     * CORREÇÃO FINAL: Ignora o erro se o usuário já estiver cadastrado.
-     * Verifica 'User already registered' (inglês) e as variações em português.
+     * CORREÇÃO ROBUSTA (Sintaxe Simplificada):
+     * Verifica se houve erro E se esse erro NÃO É um erro de "usuário já registrado".
      */
     if (
       createUserError && 
-      !createUserError.message.includes('User already registered') && 
-      !createUserError.message.includes('já existe') &&
-      !createUserError.message.includes('já foi registrado')
+      !(
+        createUserError.message.includes('registered') ||
+        createUserError.message.includes('registrado')
+      )
     ) {
       console.error("Erro ao criar usuário no Supabase:", createUserError.message);
       return { statusCode: 500, body: 'Erro ao criar usuário' };
